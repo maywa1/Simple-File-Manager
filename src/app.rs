@@ -137,6 +137,7 @@ impl App {
         self.input.replace_range(word_start..word_end, "");
 
         self.character_index = word_start;
+        self.update_query();
     }
     pub fn go_to_parent_dir(&mut self) {
         if let Some(parent) = self.current_dir.parent() {
@@ -149,14 +150,14 @@ impl App {
         self.input.insert(idx, c);
         self.move_right(1);
 
-        if self.input == ".." {
+        if self.input.trim() == ".." {
             self.go_to_parent_dir();
             self.clear_input();
             return;
         }
 
         if c == '/' {
-            let path = self.input.trim_end_matches('/').to_string();
+            let path = self.input.trim().trim_end_matches('/').to_string();
             if !path.is_empty() {
                 self.navigate_to(&path);
                 return;
