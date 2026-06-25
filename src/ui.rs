@@ -33,21 +33,27 @@ pub fn render(app: &mut App, frame: &mut Frame) {
 
     frame.render_widget(input, input_area);
 
-    let snapshot = app.nucleo.snapshot();
-
-    let items: Vec<ListItem> = snapshot
-        .matched_items(..)
-        .take(30)
-        .map(|item| {
-            let path = Path::new(&item.data);
-            let display = path
-                .strip_prefix(&app.current_dir)
-                .unwrap_or(path)
-                .display()
-                .to_string();
-            ListItem::new(display)
-        })
-        .collect();
+    let items: Vec<ListItem> = if app.input.contains('*') {
+        app.glob_results
+            .iter()
+            .map(|s| ListItem::new(s.as_str()))
+            .collect()
+    } else {
+        let snapshot = app.nucleo.snapshot();
+        snapshot
+            .matched_items(..)
+            .take(30)
+            .map(|item| {
+                let path = Path::new(&item.data);
+                let display = path
+                    .strip_prefix(&app.current_dir)
+                    .unwrap_or(path)
+                    .display()
+                    .to_string();
+                ListItem::new(display)
+            })
+            .collect()
+    };
 
     let results = List::new(items).block(Block::bordered().title("Files"));
 

@@ -1,5 +1,5 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::time::Duration;
@@ -13,12 +13,43 @@ use nucleo::Config;
 use nucleo::pattern::{CaseMatching, Normalization};
 use walkdir::WalkDir;
 
+fn matches_glob(pattern: &str, path: &str) -> bool {
+    if pattern == "*" {
+        return true;
+    }
+    if !pattern.contains('*') {
+        return pattern == path;
+    }
+
+    let parts: Vec<&str> = pattern.split('*').collect();
+
+    if !parts[0].is_empty() && !path.starts_with(parts[0]) {
+        return false;
+    }
+    if !parts[parts.len() - 1].is_empty() && !path.ends_with(parts[parts.len() - 1]) {
+        return false;
+    }
+
+    let mut search_start = if parts[0].is_empty() { 0 } else { parts[0].len() };
+    for i in 1..parts.len() - 1 {
+        if let Some(pos) = path[search_start..].find(parts[i]) {
+            search_start += pos + parts[i].len();
+        } else {
+            return false;
+        }
+    }
+
+    true
+}
+
 pub struct App {
     pub input: String,
     pub character_index: usize,
     pub nucleo: Nucleo<String>,
     pub current_dir: PathBuf,
     pending_nucleo: Option<mpsc::Receiver<Nucleo<String>>>,
+    pub glob_results: Vec<String>,
+    glob_receiver: Option<mpsc::Receiver<Vec<String>>>,
 }
 
 impl App {
@@ -34,6 +65,8 @@ impl App {
             nucleo,
             current_dir,
             pending_nucleo: None,
+            glob_results: Vec::new(),
+            glob_receiver: None,
         }
     }
 
@@ -86,9 +119,19 @@ impl App {
         }
     }
 
+    fn poll_glob_results(&mut self) {
+        if let Some(ref rx) = self.glob_receiver {
+            if let Ok(items) = rx.try_recv() {
+                self.glob_results = items;
+                self.glob_receiver = None;
+            }
+        }
+    }
+
     pub fn run(mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         loop {
             self.swap_nucleo();
+            self.poll_glob_results();
             self.nucleo.tick(10);
             terminal.draw(|frame| crate::ui::render(&mut self, frame))?;
 
@@ -184,43 +227,64 @@ impl App {
         self.update_query();
     }
 
-    fn translate_glob(input: &str) -> String {
-        if !input.contains('*') {
-            return input.to_string();
-        }
-
-        let trimmed = input.trim();
-
-        if trimmed == "*" {
-            return String::new();
-        }
-
-        if trimmed.starts_with('*') && trimmed.ends_with('*') && trimmed.len() > 2 {
-            let inner = &trimmed[1..trimmed.len() - 1];
-            return format!("'{inner}");
-        }
-
-        if let Some(suffix) = trimmed.strip_prefix('*') {
-            return format!("{suffix}$");
-        }
-
-        if let Some(prefix) = trimmed.strip_suffix('*') {
-            return format!("^{prefix}");
-        }
-
-        input.to_string()
-    }
-
     fn update_query(&mut self) {
-        let pattern = Self::translate_glob(&self.input);
-        self.nucleo.pattern.reparse(
-            0,
-            &pattern,
-            CaseMatching::Ignore,
-            Normalization::Smart,
-            false,
-        );
-        self.nucleo.tick(0);
+        if self.input.contains('*') {
+            self.nucleo.pattern.reparse(
+                0,
+                "",
+                CaseMatching::Ignore,
+                Normalization::Smart,
+                false,
+            );
+            self.nucleo.tick(0);
+
+            let pattern = self.input.clone();
+            let dir = self.current_dir.clone();
+            let all_items: Vec<String> = self
+                .nucleo
+                .snapshot()
+                .matched_items(..)
+                .map(|item| item.data.clone())
+                .collect();
+            let (tx, rx) = mpsc::channel();
+
+            std::thread::spawn(move || {
+                let glob = pattern.trim();
+                let current_dir_only = !glob.contains('/');
+                let items: Vec<String> = all_items
+                    .iter()
+                    .filter_map(|full_path| {
+                        let path = Path::new(full_path);
+                        let display = path
+                            .strip_prefix(&dir)
+                            .unwrap_or(path)
+                            .display()
+                            .to_string();
+                        if current_dir_only && display.contains('/') {
+                            return None;
+                        }
+                        if matches_glob(glob, &display) {
+                            Some(display)
+                        } else {
+                            None
+                        }
+                    })
+                    .take(30)
+                    .collect();
+                tx.send(items).ok();
+            });
+
+            self.glob_receiver = Some(rx);
+        } else {
+            self.nucleo.pattern.reparse(
+                0,
+                &self.input,
+                CaseMatching::Ignore,
+                Normalization::Smart,
+                false,
+            );
+            self.nucleo.tick(0);
+        }
     }
 
     fn byte_index(&self) -> usize {
