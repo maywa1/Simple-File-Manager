@@ -184,10 +184,38 @@ impl App {
         self.update_query();
     }
 
+    fn translate_glob(input: &str) -> String {
+        if !input.contains('*') {
+            return input.to_string();
+        }
+
+        let trimmed = input.trim();
+
+        if trimmed == "*" {
+            return String::new();
+        }
+
+        if trimmed.starts_with('*') && trimmed.ends_with('*') && trimmed.len() > 2 {
+            let inner = &trimmed[1..trimmed.len() - 1];
+            return format!("'{inner}");
+        }
+
+        if let Some(suffix) = trimmed.strip_prefix('*') {
+            return format!("{suffix}$");
+        }
+
+        if let Some(prefix) = trimmed.strip_suffix('*') {
+            return format!("^{prefix}");
+        }
+
+        input.to_string()
+    }
+
     fn update_query(&mut self) {
+        let pattern = Self::translate_glob(&self.input);
         self.nucleo.pattern.reparse(
             0,
-            &self.input,
+            &pattern,
             CaseMatching::Ignore,
             Normalization::Smart,
             false,
