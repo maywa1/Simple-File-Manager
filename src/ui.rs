@@ -7,8 +7,20 @@ use ratatui::widgets::{Block, List, ListItem, Paragraph};
 use ratatui::Frame;
 
 use crate::app::App;
+use crate::app::Modes;
+
 
 pub fn render(app: &mut App, frame: &mut Frame) {
+    match app.mode {
+        Modes::Search => search_ui(app, frame),
+        Modes::Action => action_ui(app, frame),
+        Modes::Rename => rename_ui(app, frame),
+        Modes::DeleteConfirm => delete_confirm_ui(app, frame),
+    }
+}
+
+
+fn search_ui(app: &mut App,frame: &mut Frame){
     let layout = Layout::vertical([
         Constraint::Length(1),
         Constraint::Length(3),
@@ -64,4 +76,89 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         input_area.x + prefix_len + app.character_index as u16 + 1,
         input_area.y + 1,
     ));
+}
+
+fn action_ui(app: &mut App, frame: &mut Frame) {
+    let file_name = app
+        .action_target
+        .file_name()
+        .map(|n| n.to_string_lossy())
+        .unwrap_or_default();
+
+    let title = format!(" {file_name} ");
+    let actions = vec![
+        "o - open",
+        "r - rename",
+        "d - delete",
+        "y - copy path",
+        "Esc - back",
+    ];
+
+    let width = actions.iter().map(|a| a.len()).max().unwrap_or(0).max(20) + 4;
+    let height = actions.len() + 2;
+    let area = frame.area().centered(
+        Constraint::Length(width as u16),
+        Constraint::Length(height as u16),
+    );
+
+    let text = actions
+        .iter()
+        .map(|a| Line::from(*a))
+        .collect::<Vec<_>>();
+
+    let popup = Paragraph::new(text)
+        .block(Block::bordered().title(title.as_str()))
+        .style(Style::default().fg(Color::LightMagenta));
+
+    frame.render_widget(popup, area);
+}
+
+fn rename_ui(app: &mut App, frame: &mut Frame) {
+    let old_name = app
+        .action_target
+        .file_name()
+        .map(|n| n.to_string_lossy())
+        .unwrap_or_default();
+
+    let title = format!(" Rename {old_name} to:");
+    let input_content = format!("  {}", app.input);
+
+    let input = Paragraph::new(input_content.as_str())
+        .block(Block::bordered().title(title.as_str()))
+        .style(Style::default().fg(Color::LightMagenta));
+
+    let width = 60.max(title.len() as u16);
+    let area = frame.area().centered(
+        Constraint::Length(width),
+        Constraint::Length(3),
+    );
+
+    frame.render_widget(input, area);
+
+    frame.set_cursor_position(Position::new(
+        area.x + 2 + app.character_index as u16,
+        area.y + 1,
+    ));
+}
+
+fn delete_confirm_ui(app: &mut App, frame: &mut Frame) {
+    let file_name = app
+        .action_target
+        .file_name()
+        .map(|n| n.to_string_lossy())
+        .unwrap_or_default();
+
+    let msg = format!(" Delete {file_name}? (y/N) ");
+    let width = msg.len() as u16 + 2;
+
+    let popup = Paragraph::new("")
+        .block(Block::bordered().title(msg))
+        .style(Style::default().fg(Color::LightMagenta));
+
+    let area = frame.area().centered(
+        Constraint::Length(width),
+        Constraint::Length(3),
+    );
+
+    frame.render_widget(popup, area);
 }
