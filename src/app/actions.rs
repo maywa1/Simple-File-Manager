@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::fs;
 
 use crate::app::App;
 
@@ -9,6 +10,10 @@ impl App {
             self.action_target = target;
             self.clear_input();
             self.mode = crate::app::Modes::Action;
+        } else {
+            self.action_target = target;
+            self.clear_input();
+            self.mode = crate::app::Modes::CreateFileOrDir;
         }
     }
 
@@ -39,5 +44,14 @@ impl App {
         if let Some(parent) = self.current_dir.parent() {
             self.change_dir(parent.to_path_buf());
         }
+    }
+
+
+    pub(crate) fn create_file(path: &Path) {
+        fs::File::create(path);
+    }
+
+    pub(crate) fn create_dir(path: &Path) {
+        fs::create_dir(path);
     }
 }

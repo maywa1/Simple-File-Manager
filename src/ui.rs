@@ -15,6 +15,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         Modes::Search => search_ui(app, frame),
         Modes::Action => action_ui(app, frame),
         Modes::Rename => rename_ui(app, frame),
+        Modes::CreateFileOrDir => create_file_or_dir_ui(app, frame),
         Modes::DeleteConfirm => delete_confirm_ui(app, frame),
     }
 }
@@ -78,6 +79,40 @@ fn search_ui(app: &mut App,frame: &mut Frame){
     ));
 }
 
+fn create_file_or_dir_ui(app: &mut App, frame: &mut Frame) {
+    let file_name = app
+        .action_target
+        .file_name()
+        .map(|n| n.to_string_lossy())
+        .unwrap_or_default();
+
+    let title = format!(" {file_name} ");
+    let actions = vec![
+        "d - create directory",
+        "f - create file",
+        "Esc - back",
+    ];
+
+    let width = actions.iter().map(|a| a.len()).max().unwrap_or(0).max(20) + 4;
+    let height = actions.len() + 2;
+    let area = frame.area().centered(
+        Constraint::Length(width as u16),
+        Constraint::Length(height as u16),
+    );
+
+    let text = actions
+        .iter()
+        .map(|a| Line::from(*a))
+        .collect::<Vec<_>>();
+
+    let popup = Paragraph::new(text)
+        .block(Block::bordered().title(title.as_str()))
+        .style(Style::default().fg(Color::LightMagenta));
+
+    frame.render_widget(popup, area);
+}
+
+
 fn action_ui(app: &mut App, frame: &mut Frame) {
     let file_name = app
         .action_target
@@ -112,7 +147,6 @@ fn action_ui(app: &mut App, frame: &mut Frame) {
 
     frame.render_widget(popup, area);
 }
-
 fn rename_ui(app: &mut App, frame: &mut Frame) {
     let old_name = app
         .action_target

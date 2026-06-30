@@ -18,6 +18,7 @@ pub enum Modes {
     Action,
     Rename,
     DeleteConfirm,
+    CreateFileOrDir,
 }
 
 pub struct App {
@@ -125,6 +126,20 @@ impl App {
                         self.mode = Modes::Search;
                     }
                     KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                        self.mode = Modes::Search;
+                    }
+                    _ => {}
+                },
+                Modes::CreateFileOrDir => match key.code {
+                    KeyCode::Char('d') | KeyCode::Char('D') => {
+                        Self::create_dir(&self.action_target);
+                        self.change_dir(self.action_target.clone());
+                        self.reload_dir();
+                        self.mode = Modes::Search;
+                    }
+                    KeyCode::Char('f') | KeyCode::Char('F') | KeyCode::Esc => {
+                        Self::create_file(&self.action_target);
+                        self.reload_dir();
                         self.mode = Modes::Search;
                     }
                     _ => {}
