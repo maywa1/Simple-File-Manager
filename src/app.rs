@@ -19,6 +19,7 @@ pub enum Modes {
     Rename,
     DeleteConfirm,
     CreateFileOrDir,
+    FileOpen,
 }
 
 pub struct App {
@@ -83,7 +84,7 @@ impl App {
             match self.mode {
                 Modes::Action => match key.code {
                     KeyCode::Char('o') => {
-                        Self::open_file(&self.action_target);
+                        self.open_file(&self.action_target.clone());
                         self.mode = Modes::Search;
                     }
                     KeyCode::Char('y') => {
@@ -157,7 +158,9 @@ impl App {
                     KeyCode::Right => self.move_right(1),
                     _ => {}
                 },
+                Modes::FileOpen => {},
             }
         }
     }
 }
+

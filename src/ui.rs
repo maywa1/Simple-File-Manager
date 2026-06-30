@@ -9,9 +9,9 @@ use ratatui::Frame;
 use crate::app::App;
 use crate::app::Modes;
 
-
 pub fn render(app: &mut App, frame: &mut Frame) {
     match app.mode {
+        Modes::FileOpen => { },
         Modes::Search => search_ui(app, frame),
         Modes::Action => action_ui(app, frame),
         Modes::Rename => rename_ui(app, frame),

@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::fs;
 
-use crate::app::App;
+use crate::app::{App, Modes};
 
 impl App {
     pub(crate) fn select_entry(&mut self, path: &str) {
@@ -17,11 +17,14 @@ impl App {
         }
     }
 
-    pub(crate) fn open_file(path: &Path) {
-        std::process::Command::new("xdg-open")
+    pub(crate) fn open_file(&mut self, path: &Path) {
+        self.mode = Modes::FileOpen;
+
+        let _ = std::process::Command::new("xdg-open")
             .arg(path)
-            .spawn()
-            .ok();
+            .status();
+
+        self.mode = Modes::Search;
     }
 
     pub(crate) fn delete_entry(path: &Path) {
@@ -48,10 +51,10 @@ impl App {
 
 
     pub(crate) fn create_file(path: &Path) {
-        fs::File::create(path);
+        fs::File::create(path).expect("Error creating file");
     }
 
     pub(crate) fn create_dir(path: &Path) {
-        fs::create_dir(path);
+        fs::create_dir(path).expect("Error creating directory");
     }
 }
