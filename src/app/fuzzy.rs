@@ -65,6 +65,7 @@ impl App {
 
     pub(crate) fn update_query(&mut self) {
         if self.input.contains('*') {
+            // TODO: consider filtering using nucleo itself instead of fetching everything, but idk how yet
             self.nucleo.pattern.reparse(
                 0,
                 "",

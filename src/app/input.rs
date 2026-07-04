@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::{app::App};
 
 impl App {
     pub(crate) fn insert_char(&mut self, c: char) {
@@ -108,4 +108,65 @@ impl App {
             .nth(self.character_index)
             .unwrap_or(self.input.len())
     }
+
+    pub(crate) fn auto_complete_and_search(&mut self) {
+        let prefix = self.input.to_uppercase();
+
+        let entries: Vec<String> = match std::fs::read_dir(&self.current_dir) {
+            Ok(rd) => rd
+                .filter_map(Result::ok)
+                .filter_map(|e| e.file_name().into_string().ok())
+                .filter(|name| name.to_uppercase().starts_with(&prefix))
+                .collect(),
+            Err(_) => return,
+        };
+
+        let result = if entries.len() == 1 {
+            Some(entries[0].clone())
+        } else {
+            Self::common_prefix(&entries)
+        };
+
+        if let Some(completed) = result {
+            self.input = completed;
+        }
+
+        let target = self.current_dir.join(self.input.clone());
+        if target.is_dir() {
+            self.change_dir(target);
+            self.clear_input();
+        }
+        self.character_index = self.input.len();
+        self.update_query();
+    }
+
+    fn common_prefix(strings: &[String]) -> Option<String> {
+        if strings.is_empty() {
+            return None;
+        }
+
+        let first = strings[0].as_str();
+        let mut end = first.len();
+
+        for s in &strings[1..] {
+            let bytes = s.as_bytes();
+            let first_bytes = first.as_bytes();
+
+            let mut i = 0;
+            let max = end.min(bytes.len());
+
+            while i < max && first_bytes[i] == bytes[i] {
+                i += 1;
+            }
+
+            end = i;
+
+            if end == 0 {
+                return None;
+            }
+        }
+
+        Some(first[..end].to_string())
+    }
 }
+

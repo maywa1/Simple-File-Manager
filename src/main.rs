@@ -1,4 +1,5 @@
 mod app;
+mod utils;
 mod ui;
 
 use color_eyre::Result;

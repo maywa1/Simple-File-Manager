@@ -11,7 +11,6 @@ use arboard::Clipboard as ArboardClipboard;
 
 mod actions;
 mod fuzzy;
-mod utils;
 mod input;
 
 pub enum Modes {
@@ -153,6 +152,7 @@ impl App {
                         self.delete_until_whitespace();
                     }
                     KeyCode::Enter => self.select_entry(&self.input.clone()),
+                    KeyCode::Tab => self.auto_complete_and_search(),
                     KeyCode::Char(c) => self.insert_char_and_search(c),
                     KeyCode::Backspace => self.delete_char_and_search(),
                     KeyCode::Left => self.move_left(1),

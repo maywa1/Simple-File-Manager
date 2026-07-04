@@ -1,0 +1,44 @@
+READ DIR: Ok(ReadDir("."))
+ENTRIES: []
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./README.md", "./.git", "./.gitignore", "./src", "./debug.log", "./target", "./LICENSE", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: []
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./README.md", "./.git", "./.gitignore", "./src", "./debug.log", "./target", "./LICENSE", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./README.md", "./.git", "./.gitignore", "./src", "./debug.log", "./target", "./LICENSE", "./Cargo.tom"]
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: []
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: []
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: []
+READ DIR: Iter { inner: Some(ReadDir(".")) }
+ENTRIES: ["./Cargo.toml", "./Cargo.lock", "./README.md", "./.git", "./.gitignore", "./src", "./debug.log", "./target", "./LICENSE", "./Cargo.tom"]

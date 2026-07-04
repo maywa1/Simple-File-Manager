@@ -26,7 +26,8 @@ impl App {
             .arg(path)
             .status();
 
-        terminal.clear(); // WARN: kinda awkward writing a ui thing in here, but it's needed so that the ui does not bleed
+        let _ = terminal.clear(); // WARN: kinda awkward writing a ui thing in here, but it's needed so that the ui does not bleed maybe I could use a helper method or something that handles everything, but that would envolve changing too much code
+
         self.mode = Modes::Search;
     }
 
