@@ -11,6 +11,7 @@ use arboard::Clipboard as ArboardClipboard;
 
 mod actions;
 mod fuzzy;
+mod utils;
 mod input;
 
 pub enum Modes {
@@ -84,7 +85,7 @@ impl App {
             match self.mode {
                 Modes::Action => match key.code {
                     KeyCode::Char('o') => {
-                        self.open_file(&self.action_target.clone());
+                        self.open_file(&self.action_target.clone(), terminal);
                         self.mode = Modes::Search;
                     }
                     KeyCode::Char('y') => {

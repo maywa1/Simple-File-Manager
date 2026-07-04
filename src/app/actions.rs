@@ -1,6 +1,8 @@
 use std::path::Path;
 use std::fs;
 
+use ratatui::DefaultTerminal;
+
 use crate::app::{App, Modes};
 
 impl App {
@@ -17,13 +19,14 @@ impl App {
         }
     }
 
-    pub(crate) fn open_file(&mut self, path: &Path) {
+    pub(crate) fn open_file(&mut self, path: &Path, terminal: &mut DefaultTerminal) {
         self.mode = Modes::FileOpen;
 
         let _ = std::process::Command::new("xdg-open")
             .arg(path)
             .status();
 
+        terminal.clear(); // WARN: kinda awkward writing a ui thing in here, but it's needed so that the ui does not bleed
         self.mode = Modes::Search;
     }
 
