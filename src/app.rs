@@ -85,6 +85,7 @@ impl App {
             if key.code == KeyCode::Char('c')
                 && key.modifiers.contains(KeyModifiers::CONTROL)
             {
+                let _ = terminal.clear();
                 return Ok(());
             }
 
