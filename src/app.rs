@@ -96,6 +96,10 @@ impl App {
                         self.open_file(&self.action_target.clone(), terminal);
                         self.mode = Modes::Search;
                     }
+                    KeyCode::Char('e') => {
+                        self.edit_file(&self.action_target.clone(), terminal);
+                        self.mode = Modes::Search;
+                    }
                     KeyCode::Char('y') => {
                         self.copy_path(&self.action_target.clone());
                         self.mode = Modes::Search;

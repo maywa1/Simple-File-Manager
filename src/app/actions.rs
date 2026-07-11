@@ -31,6 +31,20 @@ impl App {
         self.mode = Modes::Search;
     }
 
+    pub(crate) fn edit_file(&mut self, path: &Path, terminal: &mut DefaultTerminal) {
+        let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vim".to_string());
+
+        self.mode = Modes::FileOpen;
+
+        let _ = std::process::Command::new(&editor)
+            .arg(path)
+            .status();
+
+        let _ = terminal.clear();
+
+        self.mode = Modes::Search;
+    }
+
     pub(crate) fn finish_delete(&mut self) {
         if self.action_target.is_dir() {
             std::fs::remove_dir_all(&self.action_target).ok();

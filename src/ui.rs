@@ -140,6 +140,7 @@ fn action_ui(app: &mut App, frame: &mut Frame) {
     let title = format!(" {file_name} ");
     let actions = vec![
         "o - open",
+        "e - edit ($EDITOR)",
         "r - rename",
         "d - delete",
         "y - copy path",

@@ -50,6 +50,7 @@ Press `Enter` on a file or directory to open the action menu:
 | Key   | Action            |
 | ----- | ----------------- |
 | `o`   | Open with xdg-open |
+| `e`   | Open in $EDITOR   |
 | `r`   | Rename            |
 | `d`   | Delete (confirm)  |
 | `y`   | Copy path         |
