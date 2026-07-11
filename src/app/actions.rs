@@ -109,11 +109,7 @@ impl App {
     }
 
     pub(crate) fn begin_bulk_action(&mut self) {
-        self.bulk_targets = self
-            .glob_results
-            .iter()
-            .map(|rel| self.current_dir.join(rel))
-            .collect();
+        self.bulk_targets = self.expand_glob();
         self.clear_input();
         self.mode = Modes::BulkAction;
     }

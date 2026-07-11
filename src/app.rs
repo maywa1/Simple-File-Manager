@@ -147,7 +147,7 @@ impl App {
                             } else {
                                 self.finish_move();
                             }
-                        } else if self.input.contains('*') && !self.glob_results.is_empty() {
+                        } else if self.input.contains('*') {
                             self.begin_bulk_action();
                         } else {
                             self.select_entry(&self.input.clone());

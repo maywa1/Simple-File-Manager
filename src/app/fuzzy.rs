@@ -123,6 +123,33 @@ impl App {
             self.nucleo.tick(0);
         }
     }
+
+    pub(crate) fn expand_glob(&self) -> Vec<PathBuf> {
+        let glob = self.input.trim();
+        let current_dir_only = !glob.contains('/');
+        let dir = &self.current_dir;
+
+        self.nucleo
+            .snapshot()
+            .matched_items(..)
+            .filter_map(|item| {
+                let full_path = PathBuf::from(&item.data);
+                let display = full_path
+                    .strip_prefix(dir)
+                    .unwrap_or(&full_path)
+                    .display()
+                    .to_string();
+                if current_dir_only && display.contains('/') {
+                    return None;
+                }
+                if matches_glob(glob, &display) {
+                    Some(full_path)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 }
 
 fn matches_glob(pattern: &str, path: &str) -> bool {
