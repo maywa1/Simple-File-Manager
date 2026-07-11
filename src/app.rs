@@ -33,6 +33,8 @@ pub struct App {
     pub glob_results: Vec<String>,
     glob_receiver: Option<mpsc::Receiver<Vec<String>>>,
     clipboard: Option<ArboardClipboard>,
+    pub moving: bool,
+    pub status: Option<String>,
 }
 
 impl App {
@@ -53,6 +55,8 @@ impl App {
             glob_results: Vec::new(),
             glob_receiver: None,
             clipboard: ArboardClipboard::new().ok(),
+            moving: false,
+            status: None,
         }
     }
 
@@ -81,6 +85,8 @@ impl App {
                 return Ok(());
             }
 
+            self.status = None;
+
             match self.mode {
                 Modes::Action => match key.code {
                     KeyCode::Char('o') => {
@@ -91,25 +97,18 @@ impl App {
                         self.copy_path(&self.action_target.clone());
                         self.mode = Modes::Search;
                     }
-                    KeyCode::Char('r') => {
-                        if let Some(name) = self.action_target.file_name() {
-                            self.input = name.to_string_lossy().to_string();
-                            self.character_index = self.input.len();
-                        }
-                        self.mode = Modes::Rename;
+                    KeyCode::Char('r') => self.begin_rename(),
+                    KeyCode::Char('m') => {
+                        self.moving = true;
+                        self.clear_input();
+                        self.mode = Modes::Search;
                     }
                     KeyCode::Char('d') => self.mode = Modes::DeleteConfirm,
                     KeyCode::Esc => self.mode = Modes::Search,
                     _ => {}
                 },
                 Modes::Rename => match key.code {
-                    KeyCode::Enter => {
-                        let new_path = self.current_dir.join(&self.input);
-                        std::fs::rename(&self.action_target, &new_path).ok();
-                        self.reload_dir();
-                        self.clear_input();
-                        self.mode = Modes::Search;
-                    }
+                    KeyCode::Enter => self.finish_rename(),
                     KeyCode::Esc => {
                         self.clear_input();
                         self.mode = Modes::Search;
@@ -121,28 +120,15 @@ impl App {
                     _ => {}
                 },
                 Modes::DeleteConfirm => match key.code {
-                    KeyCode::Char('y') | KeyCode::Char('Y') => {
-                        Self::delete_entry(&self.action_target);
-                        self.reload_dir();
-                        self.mode = Modes::Search;
-                    }
+                    KeyCode::Char('y') | KeyCode::Char('Y') => self.finish_delete(),
                     KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
                         self.mode = Modes::Search;
                     }
                     _ => {}
                 },
                 Modes::CreateFileOrDir => match key.code {
-                    KeyCode::Char('d') | KeyCode::Char('D') => {
-                        Self::create_dir(&self.action_target);
-                        self.change_dir(self.action_target.clone());
-                        self.reload_dir();
-                        self.mode = Modes::Search;
-                    }
-                    KeyCode::Char('f') | KeyCode::Char('F') | KeyCode::Esc => {
-                        Self::create_file(&self.action_target);
-                        self.reload_dir();
-                        self.mode = Modes::Search;
-                    }
+                    KeyCode::Char('d') | KeyCode::Char('D') => self.finish_create_dir(),
+                    KeyCode::Char('f') | KeyCode::Char('F') | KeyCode::Esc => self.finish_create_file(),
                     _ => {}
                 },
                 Modes::Search => match key.code {
@@ -151,7 +137,19 @@ impl App {
                     {
                         self.delete_until_whitespace();
                     }
-                    KeyCode::Enter => self.select_entry(&self.input.clone()),
+                    KeyCode::Enter => {
+                        if self.moving {
+                            self.finish_move();
+                        } else {
+                            self.select_entry(&self.input.clone());
+                        }
+                    }
+                    KeyCode::Esc => {
+                        if self.moving {
+                            self.moving = false;
+                            self.clear_input();
+                        }
+                    }
                     KeyCode::Tab => self.auto_complete_and_search(),
                     KeyCode::Char(c) => self.insert_char_and_search(c),
                     KeyCode::Backspace => self.delete_char_and_search(),

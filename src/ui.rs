@@ -30,18 +30,34 @@ fn search_ui(app: &mut App,frame: &mut Frame){
 
     let [help_area, input_area, results_area] = frame.area().layout(&layout);
 
-    let help = Paragraph::new(Line::from(vec![
-        "Ctrl+C".into(),
-        " quit | type to search".into(),
-    ]));
+    let help = if let Some(ref status) = app.status {
+        Paragraph::new(Line::from(status.as_str()))
+            .style(Style::default().fg(Color::Yellow))
+    } else if app.moving {
+        let file_name = app
+            .action_target
+            .file_name()
+            .map(|n| n.to_string_lossy())
+            .unwrap_or_default();
+        Paragraph::new(Line::from(vec![
+            format!("Moving {file_name}").into(),
+            " | navigate to dir, Enter to move, Esc to cancel".into(),
+        ]))
+    } else {
+        Paragraph::new(Line::from(vec![
+            "Ctrl+C".into(),
+            " quit | type to search".into(),
+        ]))
+    };
 
     frame.render_widget(help, help_area);
 
     let dir_prefix = format!("{} > ", app.current_dir.display());
     let input_content = format!("{dir_prefix}{}", app.input);
 
+    let title = if app.moving { "Move" } else { "Search" };
     let input = Paragraph::new(input_content.as_str())
-        .block(Block::bordered().title("Search"))
+        .block(Block::bordered().title(title))
         .style(Style::default().fg(Color::LightMagenta));
 
     frame.render_widget(input, input_area);
@@ -126,6 +142,7 @@ fn action_ui(app: &mut App, frame: &mut Frame) {
         "r - rename",
         "d - delete",
         "y - copy path",
+        "m - move",
         "Esc - back",
     ];
 

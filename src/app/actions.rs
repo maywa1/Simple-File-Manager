@@ -31,12 +31,14 @@ impl App {
         self.mode = Modes::Search;
     }
 
-    pub(crate) fn delete_entry(path: &Path) {
-        if path.is_dir() {
-            std::fs::remove_dir_all(path).ok();
+    pub(crate) fn finish_delete(&mut self) {
+        if self.action_target.is_dir() {
+            std::fs::remove_dir_all(&self.action_target).ok();
         } else {
-            std::fs::remove_file(path).ok();
+            std::fs::remove_file(&self.action_target).ok();
         }
+        self.reload_dir();
+        self.mode = Modes::Search;
     }
 
     pub(crate) fn copy_path(&mut self, path: &Path) {
@@ -60,5 +62,69 @@ impl App {
 
     pub(crate) fn create_dir(path: &Path) {
         fs::create_dir(path).expect("Error creating directory");
+    }
+
+    pub(crate) fn begin_rename(&mut self) {
+        if let Some(name) = self.action_target.file_name() {
+            self.input = name.to_string_lossy().to_string();
+            self.character_index = self.input.len();
+        }
+        self.mode = Modes::Rename;
+    }
+
+    pub(crate) fn finish_rename(&mut self) {
+        let new_path = self.current_dir.join(&self.input);
+        std::fs::rename(&self.action_target, &new_path).ok();
+        self.reload_dir();
+        self.clear_input();
+        self.mode = Modes::Search;
+    }
+
+    pub(crate) fn finish_move(&mut self) {
+        let dest = self.current_dir.clone();
+        match Self::move_file_or_dir(&self.action_target, &dest) {
+            Ok(()) => {
+                self.status = Some(format!("Moved to {}", dest.display()));
+            }
+            Err(e) => {
+                self.status = Some(format!("Move failed: {e}"));
+            }
+        }
+        self.moving = false;
+        self.clear_input();
+        self.reload_dir();
+    }
+
+    pub(crate) fn finish_create_dir(&mut self) {
+        Self::create_dir(&self.action_target);
+        self.change_dir(self.action_target.clone());
+        self.reload_dir();
+        self.mode = Modes::Search;
+    }
+
+    pub(crate) fn finish_create_file(&mut self) {
+        Self::create_file(&self.action_target);
+        self.reload_dir();
+        self.mode = Modes::Search;
+    }
+
+    pub(crate) fn move_file_or_dir(source: &Path, destination: &Path) -> Result<(), String> {
+        let dest_path = if destination.is_dir() {
+            destination.join(
+                source.file_name().ok_or_else(|| "Could not get file name".to_string())?,
+            )
+        } else {
+            destination.to_path_buf()
+        };
+
+        if let Err(e) = fs::rename(source, &dest_path) {
+            if e.kind() == std::io::ErrorKind::Other {
+                fs::copy(source, &dest_path).map_err(|e| e.to_string())?;
+                fs::remove_file(source).map_err(|e| e.to_string())?;
+            } else {
+                return Err(e.to_string());
+            }
+        }
+        Ok(())
     }
 }
