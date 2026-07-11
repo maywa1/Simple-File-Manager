@@ -20,6 +20,7 @@ pub enum Modes {
     DeleteConfirm,
     CreateFileOrDir,
     FileOpen,
+    BulkAction,
 }
 
 pub struct App {
@@ -35,6 +36,7 @@ pub struct App {
     clipboard: Option<ArboardClipboard>,
     pub moving: bool,
     pub status: Option<String>,
+    pub bulk_targets: Vec<PathBuf>,
 }
 
 impl App {
@@ -57,6 +59,7 @@ impl App {
             clipboard: ArboardClipboard::new().ok(),
             moving: false,
             status: None,
+            bulk_targets: Vec::new(),
         }
     }
 
@@ -139,7 +142,13 @@ impl App {
                     }
                     KeyCode::Enter => {
                         if self.moving {
-                            self.finish_move();
+                            if !self.bulk_targets.is_empty() {
+                                self.finish_bulk_move();
+                            } else {
+                                self.finish_move();
+                            }
+                        } else if self.input.contains('*') && !self.glob_results.is_empty() {
+                            self.begin_bulk_action();
                         } else {
                             self.select_entry(&self.input.clone());
                         }
@@ -155,6 +164,16 @@ impl App {
                     KeyCode::Backspace => self.delete_char_and_search(),
                     KeyCode::Left => self.move_left(1),
                     KeyCode::Right => self.move_right(1),
+                    _ => {}
+                },
+                Modes::BulkAction => match key.code {
+                    KeyCode::Char('d') | KeyCode::Char('D') => self.bulk_delete(),
+                    KeyCode::Char('y') => self.bulk_copy_paths(),
+                    KeyCode::Char('m') => self.begin_bulk_move(),
+                    KeyCode::Esc => {
+                        self.bulk_targets.clear();
+                        self.mode = Modes::Search;
+                    }
                     _ => {}
                 },
                 Modes::FileOpen => {},

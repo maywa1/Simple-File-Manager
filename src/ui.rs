@@ -17,6 +17,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
         Modes::Rename => rename_ui(app, frame),
         Modes::CreateFileOrDir => create_file_or_dir_ui(app, frame),
         Modes::DeleteConfirm => delete_confirm_ui(app, frame),
+        Modes::BulkAction => bulk_action_ui(app, frame),
     }
 }
 
@@ -210,6 +211,35 @@ fn delete_confirm_ui(app: &mut App, frame: &mut Frame) {
         Constraint::Length(width),
         Constraint::Length(3),
     );
+
+    frame.render_widget(popup, area);
+}
+
+fn bulk_action_ui(app: &mut App, frame: &mut Frame) {
+    let count = app.bulk_targets.len();
+    let title = format!(" Bulk actions for {count} files ");
+    let actions = vec![
+        "d - delete all",
+        "y - copy all paths",
+        "m - move all",
+        "Esc - back",
+    ];
+
+    let width = actions.iter().map(|a| a.len()).max().unwrap_or(0).max(20) + 4;
+    let height = actions.len() + 2;
+    let area = frame.area().centered(
+        Constraint::Length(width as u16),
+        Constraint::Length(height as u16),
+    );
+
+    let text = actions
+        .iter()
+        .map(|a| Line::from(*a))
+        .collect::<Vec<_>>();
+
+    let popup = Paragraph::new(text)
+        .block(Block::bordered().title(title.as_str()))
+        .style(Style::default().fg(Color::LightMagenta));
 
     frame.render_widget(popup, area);
 }

@@ -108,6 +108,71 @@ impl App {
         self.mode = Modes::Search;
     }
 
+    pub(crate) fn begin_bulk_action(&mut self) {
+        self.bulk_targets = self
+            .glob_results
+            .iter()
+            .map(|rel| self.current_dir.join(rel))
+            .collect();
+        self.clear_input();
+        self.mode = Modes::BulkAction;
+    }
+
+    pub(crate) fn bulk_delete(&mut self) {
+        let count = self.bulk_targets.len();
+        for path in self.bulk_targets.drain(..) {
+            if path.is_dir() {
+                std::fs::remove_dir_all(&path).ok();
+            } else {
+                std::fs::remove_file(&path).ok();
+            }
+        }
+        self.reload_dir();
+        self.status = Some(format!("Deleted {count} files"));
+        self.mode = Modes::Search;
+    }
+
+    pub(crate) fn bulk_copy_paths(&mut self) {
+        let paths: Vec<String> = self
+            .bulk_targets
+            .iter()
+            .filter_map(|p| p.to_str().map(String::from))
+            .collect();
+        let text = paths.join("\n");
+        if let Some(clipboard) = self.clipboard.as_mut() {
+            let _ = clipboard.set_text(&text);
+        }
+        self.status = Some(format!("Copied {} paths to clipboard", paths.len()));
+        self.bulk_targets.clear();
+        self.mode = Modes::Search;
+    }
+
+    pub(crate) fn begin_bulk_move(&mut self) {
+        self.moving = true;
+        self.clear_input();
+        self.mode = Modes::Search;
+    }
+
+    pub(crate) fn finish_bulk_move(&mut self) {
+        let dest = self.current_dir.clone();
+        let mut moved = 0;
+        let mut errors = 0;
+        for source in self.bulk_targets.drain(..) {
+            match Self::move_file_or_dir(&source, &dest) {
+                Ok(()) => moved += 1,
+                Err(_) => errors += 1,
+            }
+        }
+        if errors == 0 {
+            self.status = Some(format!("Moved {moved} files to {}", dest.display()));
+        } else {
+            self.status = Some(format!("Moved {moved}, {errors} failed"));
+        }
+        self.moving = false;
+        self.clear_input();
+        self.reload_dir();
+    }
+
     pub(crate) fn move_file_or_dir(source: &Path, destination: &Path) -> Result<(), String> {
         let dest_path = if destination.is_dir() {
             destination.join(
