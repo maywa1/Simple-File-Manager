@@ -1,12 +1,10 @@
 # SFM - Simple File Manager
 
 A minimal TUI file manager built in Rust that feels like using a shell. Type to search, press Enter to act.
-<<<<<<< HEAD
-=======
+
 # Demo Video
 
 https://github.com/user-attachments/assets/b28ca122-2f0f-4d67-b9da-212ad6ce527d
->>>>>>> 07bab63 (Update README.md)
 
 ## Features
 
