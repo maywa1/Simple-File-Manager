@@ -136,7 +136,8 @@ impl App {
                 },
                 Modes::CreateFileOrDir => match key.code {
                     KeyCode::Char('d') | KeyCode::Char('D') => self.finish_create_dir(),
-                    KeyCode::Char('f') | KeyCode::Char('F') | KeyCode::Esc => self.finish_create_file(),
+                    KeyCode::Char('f') | KeyCode::Char('F') => self.finish_create_file(),
+                    KeyCode::Esc                            => self.mode = Modes::Search,
                     _ => {}
                 },
                 Modes::Search => match key.code {
